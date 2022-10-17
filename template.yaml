@@ -1,0 +1,85 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  KoH_app
+  
+  SAM Template for KoH_app
+
+Parameters:
+  Env:
+    Type: String
+    AllowedValues:
+      - dev
+      - prod
+    Description: Environment in which the application will be deployed. Allowed values [dev, prod]
+
+Globals:
+  Function:
+    Timeout: 5
+
+Resources:
+  AuthFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "KoH_${Env}_auth"
+      CodeUri: ./../KoH_service_auth
+      Handler: main
+      Runtime: go1.x
+      Role: arn:aws:iam::763636035052:role/service-role/lambda-in-go-lang-executor
+      Architectures:
+        - x86_64
+      Events:
+        Auth:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /authenticate
+            Method: POST
+        VerifyToken:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /verify_token
+            Method: GET
+      Environment:
+        Variables:
+          PARAM1: VALUE
+    Metadata:
+      BuildMethod: makefile
+  RegFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName: !Sub "KoH_${Env}_reg"
+      CodeUri: ./../KoH_service_reg
+      Handler: main
+      Runtime: go1.x
+      Role: arn:aws:iam::763636035052:role/service-role/lambda-in-go-lang-executor
+      Architectures:
+        - x86_64
+      Events:
+        Register:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref HttpApi
+            Path: /register
+            Method: POST
+      Environment:
+        Variables:
+          PARAM1: VALUE
+    Metadata:
+      BuildMethod: makefile
+  HttpApi:
+      Type: AWS::Serverless::HttpApi
+      Properties:
+        StageName: !Ref Env
+
+Outputs:
+  HttpApi:
+    Description: "API Gateway endpoint URL for Prod environment for First Function"
+    Value: !Sub "https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/${Env}/"
+  AuthFunction:
+    Description: "KoH auth function"
+    Value: !GetAtt AuthFunction.Arn
+  RegFunction:
+    Description: "KoH reg function"
+    Value: !GetAtt RegFunction.Arn
