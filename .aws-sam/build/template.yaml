@@ -15,7 +15,7 @@ Parameters:
       [dev, prod]
 Globals:
   Function:
-    Timeout: 5
+    Timeout: 10
 Resources:
   AuthFunction:
     Type: AWS::Serverless::Function
@@ -28,6 +28,13 @@ Resources:
       Role: arn:aws:iam::763636035052:role/service-role/lambda-in-go-lang-executor
       Architectures:
       - x86_64
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: TokensTable
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: UsersTable
       Events:
         Auth:
           Type: HttpApi
@@ -45,7 +52,10 @@ Resources:
             Method: GET
       Environment:
         Variables:
-          PARAM1: VALUE
+          TOKENS_TABLE_NAME:
+            Ref: TokensTable
+          USERS_TABLE_NAME:
+            Ref: UsersTable
     Metadata:
       BuildMethod: makefile
       SamResourceId: AuthFunction
@@ -60,6 +70,10 @@ Resources:
       Role: arn:aws:iam::763636035052:role/service-role/lambda-in-go-lang-executor
       Architectures:
       - x86_64
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: UsersTable
       Events:
         Register:
           Type: HttpApi
@@ -70,7 +84,8 @@ Resources:
             Method: POST
       Environment:
         Variables:
-          PARAM1: VALUE
+          USERS_TABLE_NAME:
+            Ref: UsersTable
     Metadata:
       BuildMethod: makefile
       SamResourceId: RegFunction
@@ -79,9 +94,43 @@ Resources:
     Properties:
       StageName:
         Ref: Env
+  TokensTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: KoH_TokensTable
+      AttributeDefinitions:
+      - AttributeName: token
+        AttributeType: S
+      - AttributeName: userId
+        AttributeType: S
+      KeySchema:
+      - AttributeName: token
+        KeyType: HASH
+      - AttributeName: userId
+        KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+  UsersTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: KoH_UsersTable
+      AttributeDefinitions:
+      - AttributeName: id
+        AttributeType: S
+      - AttributeName: login
+        AttributeType: S
+      KeySchema:
+      - AttributeName: id
+        KeyType: HASH
+      - AttributeName: login
+        KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
 Outputs:
   HttpApi:
-    Description: API Gateway endpoint URL for Prod environment for First Function
+    Description: API Gateway endpoint URL
     Value:
       Fn::Sub: https://${HttpApi}.execute-api.${AWS::Region}.amazonaws.com/${Env}/
   AuthFunction:
