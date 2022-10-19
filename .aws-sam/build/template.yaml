@@ -128,6 +128,16 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
+      GlobalSecondaryIndexes:
+      - IndexName: KoH_UsersLogin
+        KeySchema:
+        - AttributeName: login
+          KeyType: HASH
+        Projection:
+          ProjectionType: ALL
+        ProvisionedThroughput:
+          ReadCapacityUnits: 5
+          WriteCapacityUnits: 5
 Outputs:
   HttpApi:
     Description: API Gateway endpoint URL
