@@ -89,6 +89,36 @@ Resources:
     Metadata:
       BuildMethod: makefile
       SamResourceId: RegFunction
+  RoomFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      FunctionName:
+        Fn::Sub: KoH_${Env}_room
+      CodeUri: RoomFunction
+      Handler: main
+      Runtime: go1.x
+      Role: arn:aws:iam::763636035052:role/service-role/lambda-in-go-lang-executor
+      Architectures:
+      - x86_64
+      Policies:
+      - DynamoDBCrudPolicy:
+          TableName:
+            Ref: UsersTable
+      Events:
+        Register:
+          Type: HttpApi
+          Properties:
+            ApiId:
+              Ref: HttpApi
+            Path: /user/{id}/rooms
+            Method: GET
+      Environment:
+        Variables:
+          USERS_TABLE_NAME:
+            Ref: UsersTable
+    Metadata:
+      BuildMethod: makefile
+      SamResourceId: RoomFunction
   HttpApi:
     Type: AWS::Serverless::HttpApi
     Properties:
